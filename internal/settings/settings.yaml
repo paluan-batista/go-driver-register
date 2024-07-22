@@ -1,0 +1,9 @@
+server:
+  host: 0.0.0.0:8000
+  name: "go-driver-register"
+postgres:
+  db_host:
+  db_user:
+  db_password:
+  db_name:
+  db_port:
