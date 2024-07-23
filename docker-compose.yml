@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: driver_register_db
+    expose:
+      - 5432
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_PASSWORD=driver-register
+      - POSTGRES_USER=driver-register
+      - POSTGRES_DB=driver-register
+    restart: unless-stopped
+    volumes:
+      - database_postgres:/var/lib/postgresql/data
+    network_mode: bridge
+
+  driver-register-api:
+    build:
+      context: .
+      dockerfile: build/package/docker/service/Dockerfile
+    image: go-driver-register:latest
+    container_name: driver-register-api
+    depends_on:
+      - postgres
+    expose:
+      - 8000
+    ports:
+      - '8000:8000'
+    restart: unless-stopped
+    network_mode: bridge
+
+volumes:
+  database_postgres:
