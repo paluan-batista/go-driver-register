@@ -9,7 +9,7 @@ import (
 )
 
 func StartVehicleRoutes(e *echo.Echo) {
-	db := container.GetContainer().PostgresDB.DB
+	db := container.GetDB()
 	vehicleUsecase := usecases.NewVehicleUsecase(repository.NewVehicleRepository(db), repository.NewDriverRepository(db))
 	vehicleHandler := handler.NewVehicleHandler(vehicleUsecase)
 	e.POST("/vehicles", vehicleHandler.CreateVehicle)

@@ -4,8 +4,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go-driver-register/internal/container"
-	"go-driver-register/internal/domain/entities"
 	"go-driver-register/internal/server/routes"
+	"go-driver-register/internal/settings"
 )
 
 func StartServer() {
@@ -13,16 +13,11 @@ func StartServer() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	container.NewContainer()
-	err := container.PostgresDB.AutoMigrate(&entities.Driver{}, entities.Vehicle{})
-	if err != nil {
-		panic("failed to migrate")
-	}
+	container.InitContainer()
 
-	err = routes.Register(e)
-	if err != nil {
-		e.Logger.Fatal()
-	}
+	routes.SetUpHealthRoute(e)
 	routes.StartDriverRoutes(e)
 	routes.StartVehicleRoutes(e)
+
+	e.Logger.Fatal(e.Start(settings.GetServerConfig().Host))
 }

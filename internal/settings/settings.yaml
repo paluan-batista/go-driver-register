@@ -1,9 +1,7 @@
-server:
-  host: 0.0.0.0:8000
-  name: "go-driver-register"
-postgres:
-  db_host:
-  db_user:
-  db_password:
-  db_name:
-  db_port:
+version: '3.8'
+
+db:
+  environment:
+    POSTGRES_DB: driver-register
+    POSTGRES_USER: driver-register
+    POSTGRES_PASSWORD: driver-register

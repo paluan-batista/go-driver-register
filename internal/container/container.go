@@ -2,11 +2,19 @@ package container
 
 import (
 	"fmt"
+	"go-driver-register/internal/domain/entities"
 	"go-driver-register/internal/settings"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 	"os"
+	"sync"
+)
+
+var (
+	database         *gorm.DB
+	localContainer   *Container
+	runOnceContainer sync.Once
 )
 
 type PostgresDB struct {
@@ -14,42 +22,59 @@ type PostgresDB struct {
 }
 
 type Container struct {
-	Log        *log.Logger
-	PostgresDB *PostgresDB
+	Log *log.Logger
+	Db  *gorm.DB
+}
+
+func InitContainer() *Container {
+	runOnceContainer.Do(func() {
+		localContainer = NewContainer()
+	})
+	return localContainer
 }
 
 func NewContainer() *Container {
-	return startContainer()
-
-}
-
-func startContainer() *Container {
 	settings.Init()
-	container := &Container{Log: log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime),
-		PostgresDB: startPostgresDB()}
-	return container
-
+	logger := log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime)
+	postgresSQLConnect(logger, settings.GetDatabaseConfig())
+	return &Container{
+		logger,
+		database,
+	}
 }
 
-func startPostgresDB() *PostgresDB {
-	host := settings.GetPostgresConfig().DbHost
-	user := settings.GetPostgresConfig().DbUser
-	password := settings.GetPostgresConfig().DbPassword
-	dbname := settings.GetPostgresConfig().DbName
-	port := settings.GetPostgresConfig().DbPort
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, user, password, dbname, port)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+func postgresSQLConnect(logger *log.Logger, envs *settings.DatabaseConfig) {
+	var err error
+	dbUrl := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable",
+		envs.Postgres.DbHost, envs.Postgres.DbUser, envs.Postgres.DbPassword, envs.Postgres.DbName, envs.Postgres.DbPort)
+	database, err = gorm.Open(postgres.Open(dbUrl), &gorm.Config{
+		SkipDefaultTransaction: true,
+	})
 	if err != nil {
-		NewContainer().Log.Fatalf("Error on start postgres :%s", err.Error())
+		logger.Fatal("This is the error:", err)
 	}
-	return &PostgresDB{db}
+
+	logger.Printf("We are connected to the %s database", envs.Postgres.DbName)
+
+	if err = database.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
+		logger.Fatal("Error creating extension:", err)
+		os.Exit(1)
+	}
+
+	if err := database.Debug().AutoMigrate(&entities.Driver{}, &entities.Vehicle{}); err != nil {
+		logger.Fatal(err.Error())
+		os.Exit(1)
+	}
 }
 
 func GetLogger() *log.Logger {
-	return NewContainer().Log
+	return localContainer.Log
 }
 
 func GetContainer() *Container {
-	return NewContainer()
+	return localContainer
+}
+
+func GetDB() *gorm.DB {
+	return localContainer.Db
 }
