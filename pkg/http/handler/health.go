@@ -1,4 +1,4 @@
-package http
+package handler
 
 import (
 	"github.com/labstack/echo/v4"
@@ -6,8 +6,5 @@ import (
 )
 
 func Health(c echo.Context) error {
-	response := map[string]string{
-		"status": "UP",
-	}
-	return c.JSON(http.StatusOK, response)
+	return c.String(http.StatusOK, "App is healthy")
 }

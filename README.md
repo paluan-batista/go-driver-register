@@ -17,8 +17,8 @@ Backend application to manage drivers and vehicles, focusing on fuel efficiency.
 
 - Docker
 - Docker Compose
-- Python 3
-- Pip 3
+- Python 3 (to run integration tests)
+- Pip 3 (to run integration tests)
 - Go
 
 ### Steps
@@ -39,6 +39,14 @@ Backend application to manage drivers and vehicles, focusing on fuel efficiency.
     ```
 
 4. Access the application at [http://localhost:8000](http://localhost:8000).
+
+
+5. For run integration tests:
+ Enter inside internal/tests/integration and run tests with command:
+    ```sh
+    python3 integration_tests.py
+
+    ```
 
 ## Endpoints
 

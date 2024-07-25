@@ -9,7 +9,7 @@ import (
 )
 
 func StartDriverRoutes(e *echo.Echo) {
-	db := container.GetContainer().PostgresDB.DB
+	db := container.GetDB()
 	driverRepository := repository.NewDriverRepository(db)
 	driverUsecase := usecases.NewDriverUsecase(driverRepository)
 	driverHandler := handler.NewDriverController(driverUsecase)

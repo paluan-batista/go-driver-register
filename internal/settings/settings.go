@@ -2,7 +2,7 @@ package settings
 
 import (
 	"github.com/spf13/viper"
-	"go-driver-register/internal/container"
+	"log"
 )
 
 const (
@@ -12,7 +12,6 @@ const (
 var (
 	viperConfig = viper.New()
 	config      = Init()
-	logger      = container.GetLogger()
 )
 
 func Init() *serviceConfig {
@@ -22,9 +21,11 @@ func Init() *serviceConfig {
 	viperConfig.SetConfigName("settings")
 	viperConfig.SetConfigType("yaml")
 
+	setUpDefaults()
+
 	if err := viperConfig.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			logger.Fatalf("%s: %s", errorReadingConfigFile, err.Error())
+			log.Fatalf("%s: %s", errorReadingConfigFile, err.Error())
 		}
 	}
 
@@ -32,11 +33,11 @@ func Init() *serviceConfig {
 		Host: viperConfig.GetString("server.host"),
 	}
 	postgresConfig := &PostgresConfig{
-		DbName:     viperConfig.GetString("postgres.db_name"),
-		DbUser:     viperConfig.GetString("postgres.db_user"),
-		DbHost:     viperConfig.GetString("postgres.db_host"),
-		DbPassword: viperConfig.GetString("postgres.db_password"),
-		DbPort:     viperConfig.GetInt("postgres.db_port"),
+		DbName:     viperConfig.GetString("db.environment.POSTGRES_DB"),
+		DbUser:     viperConfig.GetString("db.environment.POSTGRES_USER"),
+		DbHost:     viperConfig.GetString("db.environment.POSTGRES_HOST"),
+		DbPassword: viperConfig.GetString("db.environment.POSTGRES_PASSWORD"),
+		DbPort:     viperConfig.GetInt("db.environment.POSTGRES_PORT"),
 	}
 
 	databaseConfig := &DatabaseConfig{Postgres: postgresConfig}
@@ -68,6 +69,21 @@ type PostgresConfig struct {
 	DbPort     int
 }
 
-func GetPostgresConfig() *PostgresConfig {
-	return config.Database.Postgres
+func setUpDefaults() {
+	viperConfig.SetDefault("db.environment.POSTGRES_HOST", "postgres")
+	viperConfig.SetDefault("db.environment.POSTGRES_PORT", 5432)
+	viperConfig.SetDefault("db.environment.POSTGRES_USER", "driver-register")
+	viperConfig.SetDefault("db.environment.POSTGRES_PASSWORD", "driver-register")
+	viperConfig.SetDefault("db.environment.POSTGRES_DB", "driver-register")
+	viperConfig.SetDefault("db.environment.POSTGRES_DB", "driver-register")
+	viperConfig.SetDefault("server.host", ":8000")
+	viperConfig.AutomaticEnv()
+}
+
+func GetDatabaseConfig() *DatabaseConfig {
+	return config.Database
+}
+
+func GetServerConfig() *ServerConfig {
+	return config.Server
 }

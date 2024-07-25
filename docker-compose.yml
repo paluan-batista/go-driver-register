@@ -15,12 +15,11 @@ services:
     restart: unless-stopped
     volumes:
       - database_postgres:/var/lib/postgresql/data
-    network_mode: bridge
+    networks:
+      - my_network
 
   driver-register-api:
-    build:
-      context: .
-      dockerfile: build/package/docker/service/Dockerfile
+    build: .
     image: go-driver-register:latest
     container_name: driver-register-api
     depends_on:
@@ -30,7 +29,12 @@ services:
     ports:
       - '8000:8000'
     restart: unless-stopped
-    network_mode: bridge
+    networks:
+      - my_network
 
 volumes:
   database_postgres:
+
+networks:
+  my_network:
+
